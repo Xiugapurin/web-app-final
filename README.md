@@ -1,5 +1,8 @@
-# Vue 3 + Vite
+## 運行
 
-This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
+clone 專案後，運行 `npm i` 安裝套件，然後運行`npm run dev` 開啟 Vue 專案
 
-Learn more about IDE Support for Vue in the [Vue Docs Scaling up Guide](https://vuejs.org/guide/scaling-up/tooling.html#ide-support).
+## 其他
+
+1. 常用元件可以放在 ./src/components 目錄下
+2. vue 檔案不寫 style 標籤，直接使用 tailwind css
