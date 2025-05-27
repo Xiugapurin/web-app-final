@@ -9,13 +9,22 @@
     <!-- 主內容 -->
     <div class="w-[65%] mx-auto flex flex-col relative z-10">
       <!-- 搜索框 -->
-      <div class="w-full max-w-[400px] mx-auto mb-6 bg-white rounded-lg">
-        <input
-          type="text"
-          placeholder="搜索: 房間名/ID"
-          v-model="searchQuery"
-          class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg text-base outline-none focus:border-black transition-colors"
-        />
+      <div class="relative mb-6">
+        <div class="mx-auto max-w-[400px] bg-white rounded-lg">
+          <input
+            type="text"
+            placeholder="搜索: 房間名/ID"
+            v-model="searchQuery"
+            class="w-full px-4 py-2.5 border-2 border-gray-300 rounded-lg text-base outline-none focus:border-black transition-colors"
+          />
+        </div>
+
+        <!-- 玩家名稱（固定在右側偏下） -->
+        <!-- <div
+          class="absolute right-4 -bottom-1 translate-y-1 bg-white rounded-lg px-4 py-2 border-2 border-gray-300 font-medium"
+        >
+          玩家: {{ playerName }}
+        </div> -->
       </div>
 
       <!-- 房間列表區塊 (垂直滑動) -->
