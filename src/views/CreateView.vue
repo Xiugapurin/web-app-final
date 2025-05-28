@@ -3,12 +3,16 @@
     ref="canvas"
     class="fixed top-0 left-0 w-full h-full z-0 pointer-events-none"
   ></canvas>
-  <div class="w-full sm:w-4/5 md:w-3/4 lg:w-2/3 xl:w-1/2 mx-auto flex flex-col relative z-10 px-4 sm:px-0">
+  <div
+    class="w-full sm:w-4/5 md:w-3/4 lg:w-2/3 xl:w-1/2 mx-auto flex flex-col relative z-10 px-4 sm:px-0"
+  >
     <!-- 創建房間表單 -->
     <div
       class="bg-white rounded-xl sm:rounded-2xl shadow-md p-4 sm:p-6 md:p-8 mx-auto mt-16 sm:mt-24 md:mt-32 w-full max-w-md"
     >
-      <h1 class="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6">創建新房間</h1>
+      <h1 class="text-xl sm:text-2xl font-bold text-center mb-4 sm:mb-6">
+        創建新房間
+      </h1>
 
       <!-- 房間名稱輸入 -->
       <div class="mb-4 sm:mb-6">
@@ -43,7 +47,9 @@
       </div>
 
       <!-- 按鈕區域 -->
-      <div class="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3 md:gap-4">
+      <div
+        class="flex flex-col sm:flex-row justify-center gap-2 sm:gap-3 md:gap-4"
+      >
         <button
           @click="goBack"
           class="px-4 sm:px-6 py-1 sm:py-2 text-sm sm:text-base bg-lime-500 text-white font-medium rounded-lg hover:bg-lime-400 transition-colors border-2 border-gray-500"
@@ -70,16 +76,35 @@ import { useRoomsStore } from "../stores/Rooms";
 const router = useRouter();
 const roomName = ref("");
 const maxPlayers = ref(2); // 默認2人
-const rooms = useRoomsStore()
+const rooms = useRoomsStore();
 
 // 生成隨機ID (3位大寫字母+數字)
-const generateRandomId = () => {
+const generateRandomId = (existingRooms) => {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = "";
-  for (let i = 0; i < 3; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  const maxAttempts = 50; // 防止无限循环
+  let attempts = 0;
+
+  while (attempts < maxAttempts) {
+    let result = "";
+    for (let i = 0; i < 3; i++) {
+      result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+
+    // 检查是否已存在相同ID
+    const isUnique = !existingRooms.some((room) => room.id === result);
+    if (isUnique) {
+      return result;
+    }
+
+    attempts++;
   }
-  return result;
+
+  // 如果多次尝试仍未生成唯一ID，则延长ID长度
+  let fallbackId = "";
+  for (let i = 0; i < 6; i++) {
+    fallbackId += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return fallbackId;
 };
 
 const goBack = () => {
@@ -90,15 +115,15 @@ const createNewRoom = () => {
   if (!roomName.value) return;
 
   const newRoom = {
-    id: generateRandomId(),
+    id: generateRandomId(rooms.roomList),
     name: roomName.value,
     currentPlayers: 0,
     maxPlayers: maxPlayers.value,
     timeElapsed: 0,
-    maxTime: 120,
+    // maxTime: 120,
   };
 
-  rooms.addRoom(newRoom)
+  rooms.addRoom(newRoom);
 
   // 把新房間資訊傳到後端
   // Todo

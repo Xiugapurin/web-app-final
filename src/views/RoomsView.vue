@@ -121,7 +121,7 @@ const roomList = rooms.roomList
 
 const filteredRooms = computed(() => {
   if (!searchQuery.value) return roomList;
-  return rooms.value.filter(
+  return roomList.filter(
     (room) =>
       room.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
       room.id.toLowerCase().includes(searchQuery.value.toLowerCase())
@@ -149,7 +149,6 @@ let hue = 0;
 let animationId;
 
 onMounted(() => {
-
   const ctx = canvas.value.getContext("2d");
 
   function resizeCanvas() {
