@@ -26,7 +26,7 @@
           type="text"
           v-model="roomName"
           placeholder="輸入房間名稱"
-          class="w-full px-3 sm:px-4 py-1 sm:py-2 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
+          class="w-full px-3 sm:px-4 py-1 sm:py-2 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none transition-colors"
         />
       </div>
 
@@ -40,7 +40,7 @@
         <select
           id="maxPlayers"
           v-model="maxPlayers"
-          class="w-full px-3 sm:px-4 py-1 sm:py-2 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none transition-colors"
+          class="w-full px-3 sm:px-4 py-1 sm:py-2 text-sm sm:text-base border-2 border-gray-300 rounded-lg focus:border-black focus:outline-none transition-colors"
         >
           <option v-for="n in 9" :key="n" :value="n + 1">{{ n + 1 }}人</option>
         </select>
