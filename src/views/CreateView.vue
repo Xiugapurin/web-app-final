@@ -65,10 +65,12 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
+import { useRoomsStore } from "../stores/Rooms";
 
 const router = useRouter();
 const roomName = ref("");
 const maxPlayers = ref(2); // 默認2人
+const rooms = useRoomsStore()
 
 // 生成隨機ID (3位大寫字母+數字)
 const generateRandomId = () => {
@@ -92,10 +94,11 @@ const createNewRoom = () => {
     name: roomName.value,
     currentPlayers: 0,
     maxPlayers: maxPlayers.value,
-    language: "ZH-CN",
     timeElapsed: 0,
     maxTime: 120,
   };
+
+  rooms.addRoom(newRoom)
 
   // 把新房間資訊傳到後端
   // Todo

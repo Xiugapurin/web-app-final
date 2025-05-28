@@ -77,46 +77,50 @@ import { ref, computed, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import RoomCard from "./RoomCard.vue";
 import { useUserStore } from "../stores/User";
+import { useRoomsStore } from "../stores/Rooms";
 
 const router = useRouter();
 const searchQuery = ref("");
 const selectedRoomId = ref(null);
 
 const user = useUserStore();
+const rooms = useRoomsStore()
+// 房間數據 可能要從後端取
+const roomList = rooms.roomList
+// const rooms = ref([
+//   {
+//     id: "2DV",
+//     name: "動漫",
+//     currentPlayers: 5,
+//     maxPlayers: 5,
+//     timeElapsed: 0,
+//     maxTime: 120,
+//   },
+//   {
+//     id: "1bX",
+//     name: "我的世界",
+//     currentPlayers: 0,
+//     maxPlayers: 15,
+//     language: "ZH-CN",
+//     timeElapsed: 0,
+//     maxTime: 180,
+//   },
+//   // 添加更多房間數據以測試滾動
+//   ...Array.from({ length: 20 }, (_, i) => ({
+//     id: `RM${i + 3}`,
+//     name: `房間 ${i + 3}`,
+//     currentPlayers: Math.floor(Math.random() * 10),
+//     maxPlayers: 10,
+//     language: "ZH-CN",
+//     timeElapsed: 0,
+//     maxTime: 120 + Math.floor(Math.random() * 60),
+//   })),
+// ]);
 
-// 房間數據
-const rooms = ref([
-  {
-    id: "2DV",
-    name: "動漫",
-    currentPlayers: 5,
-    maxPlayers: 5,
-    timeElapsed: 0,
-    maxTime: 120,
-  },
-  {
-    id: "1bX",
-    name: "我的世界",
-    currentPlayers: 0,
-    maxPlayers: 15,
-    language: "ZH-CN",
-    timeElapsed: 0,
-    maxTime: 180,
-  },
-  // 添加更多房間數據以測試滾動
-  ...Array.from({ length: 20 }, (_, i) => ({
-    id: `RM${i + 3}`,
-    name: `房間 ${i + 3}`,
-    currentPlayers: Math.floor(Math.random() * 10),
-    maxPlayers: 10,
-    language: "ZH-CN",
-    timeElapsed: 0,
-    maxTime: 120 + Math.floor(Math.random() * 60),
-  })),
-]);
+// 過濾房間
 
 const filteredRooms = computed(() => {
-  if (!searchQuery.value) return rooms.value;
+  if (!searchQuery.value) return roomList;
   return rooms.value.filter(
     (room) =>
       room.name.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
