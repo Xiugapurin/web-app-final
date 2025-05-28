@@ -20,11 +20,11 @@
         </div>
 
         <!-- 玩家名稱（固定在右側偏下） -->
-        <!-- <div
+        <div
           class="absolute right-4 -bottom-1 translate-y-1 bg-white rounded-lg px-4 py-2 border-2 border-gray-300 font-medium"
         >
           玩家: {{ playerName }}
-        </div> -->
+        </div>
       </div>
 
       <!-- 房間列表區塊 (垂直滑動) -->
@@ -152,6 +152,26 @@ onMounted(() => {
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
 
+  // 鼠標移動效果 - 跟隨粒子
+  function handleMouseMove(e) {
+    for (let i = 0; i < 5; i++) {
+      particles.push({
+        x: e.clientX,
+        y: e.clientY,
+        size: Math.random() * 8 + 2,
+        color: `hsl(${hue}, 100%, 50%)`,
+        velocityX: Math.random() * 3 - 2,
+        velocityY: Math.random() * 3 - 2,
+        life: 100,
+        type: "trail", // 標記為跟隨粒子
+        gravity: 0,
+        friction: 0.95,
+      });
+    }
+    hue = (hue + 2) % 360;
+  }
+
+  // 鼠標點擊效果 - 煙花爆炸
   function handleClick(e) {
     // 產生更多粒子以達到濺射效果
     const particleCount = 30 + Math.floor(Math.random() * 20);
@@ -169,17 +189,15 @@ onMounted(() => {
         life: 60 + Math.random() * 50,
         gravity: 0.2,
         friction: 0.95,
+        type: "firework", // 標記為煙花粒子
       });
     }
     hue = (hue + 30) % 360;
   }
 
   function animate() {
+    // 清除畫布時使用完全透明
     ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
-
-    // 使用半透明背景創造拖尾效果
-    ctx.fillStyle = "rgba(0, 0, 0, 0.05)";
-    ctx.fillRect(0, 0, canvas.value.width, canvas.value.height);
 
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
@@ -191,14 +209,14 @@ onMounted(() => {
       // 更新粒子位置
       p.velocityX *= p.friction;
       p.velocityY *= p.friction;
-      p.velocityY += p.gravity; // 添加重力效果
+      p.velocityY += p.gravity;
 
       p.x += p.velocityX;
       p.y += p.velocityY;
       p.life--;
-      p.size *= 0.92;
+      p.size *= p.type === "firework" ? 0.92 : 0.95; // 煙花粒子縮小更快
 
-      if (p.life <= 0 || p.size <= 1) {
+      if (p.life <= 0 || p.size <= 0.5) {
         particles.splice(i, 1);
         i--;
       }
@@ -206,10 +224,13 @@ onMounted(() => {
     animationId = requestAnimationFrame(animate);
   }
 
+  // 添加事件監聽器
+  window.addEventListener("mousemove", handleMouseMove);
   window.addEventListener("click", handleClick);
   animate();
 
   onUnmounted(() => {
+    window.removeEventListener("mousemove", handleMouseMove);
     window.removeEventListener("click", handleClick);
     window.removeEventListener("resize", resizeCanvas);
     cancelAnimationFrame(animationId);

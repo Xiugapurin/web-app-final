@@ -111,16 +111,13 @@ import { useRouter } from "vue-router";
 
 const router = useRouter();
 const userName = ref("");
-const canvas = ref(null);
+const roomName = ref("");
+const maxPlayers = ref(2); // 默認2人
 const showModal = ref(false);
 
-let particles = [];
-let hue = 0;
-let animationId;
-
+// 遊戲相關函數
 function startGame() {
   if (!userName.value) return;
-  // 開始遊戲的邏輯
   console.log("遊戲開始，用戶名:", userName.value);
 }
 
@@ -131,6 +128,47 @@ function goToRooms() {
   }
   router.push("/rooms");
 }
+
+// 房間相關函數
+const generateRandomId = () => {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let result = "";
+  for (let i = 0; i < 3; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+};
+
+const goBack = () => {
+  router.push("/rooms");
+};
+
+const createNewRoom = () => {
+  if (!roomName.value) return;
+
+  const newRoom = {
+    id: generateRandomId(),
+    name: roomName.value,
+    currentPlayers: 0,
+    maxPlayers: maxPlayers.value,
+    language: "ZH-CN",
+    timeElapsed: 0,
+    maxTime: 120,
+  };
+
+  // 把新房間資訊傳到後端
+  // Todo
+
+  // 導回房間列表頁
+  router.push("/rooms");
+};
+
+// canvas 特效
+const canvas = ref(null);
+
+let particles = [];
+let hue = 0;
+let animationId;
 
 onMounted(() => {
   const ctx = canvas.value.getContext("2d");
@@ -143,23 +181,53 @@ onMounted(() => {
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
 
+  // 鼠標移動效果 - 跟隨粒子
   function handleMouseMove(e) {
     for (let i = 0; i < 5; i++) {
       particles.push({
         x: e.clientX,
         y: e.clientY,
-        size: Math.random() * 10 + 5,
+        size: Math.random() * 8 + 2,
         color: `hsl(${hue}, 100%, 50%)`,
         velocityX: Math.random() * 3 - 2,
         velocityY: Math.random() * 3 - 2,
         life: 100,
+        type: "trail", // 標記為跟隨粒子
+        gravity: 0,
+        friction: 0.95,
       });
     }
-    hue += 2;
+    hue = (hue + 2) % 360;
+  }
+
+  // 鼠標點擊效果 - 煙花爆炸
+  function handleClick(e) {
+    // 產生更多粒子以達到濺射效果
+    const particleCount = 30 + Math.floor(Math.random() * 20);
+    for (let i = 0; i < particleCount; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 10 + 2;
+
+      particles.push({
+        x: e.clientX,
+        y: e.clientY,
+        size: Math.random() * 15 + 5,
+        color: `hsl(${hue + Math.random() * 60}, 100%, 50%)`,
+        velocityX: Math.cos(angle) * speed,
+        velocityY: Math.sin(angle) * speed,
+        life: 60 + Math.random() * 50,
+        gravity: 0.2,
+        friction: 0.95,
+        type: "firework", // 標記為煙花粒子
+      });
+    }
+    hue = (hue + 30) % 360;
   }
 
   function animate() {
+    // 清除畫布時使用完全透明
     ctx.clearRect(0, 0, canvas.value.width, canvas.value.height);
+
     for (let i = 0; i < particles.length; i++) {
       const p = particles[i];
       ctx.beginPath();
@@ -167,10 +235,15 @@ onMounted(() => {
       ctx.fillStyle = p.color;
       ctx.fill();
 
+      // 更新粒子位置
+      p.velocityX *= p.friction;
+      p.velocityY *= p.friction;
+      p.velocityY += p.gravity;
+
       p.x += p.velocityX;
       p.y += p.velocityY;
       p.life--;
-      p.size *= 0.95;
+      p.size *= p.type === "firework" ? 0.92 : 0.95; // 煙花粒子縮小更快
 
       if (p.life <= 0 || p.size <= 0.5) {
         particles.splice(i, 1);
@@ -180,11 +253,14 @@ onMounted(() => {
     animationId = requestAnimationFrame(animate);
   }
 
+  // 添加事件監聽器
   window.addEventListener("mousemove", handleMouseMove);
+  window.addEventListener("click", handleClick);
   animate();
 
   onUnmounted(() => {
     window.removeEventListener("mousemove", handleMouseMove);
+    window.removeEventListener("click", handleClick);
     window.removeEventListener("resize", resizeCanvas);
     cancelAnimationFrame(animationId);
   });
