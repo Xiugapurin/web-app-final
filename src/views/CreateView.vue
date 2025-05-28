@@ -150,7 +150,7 @@ onMounted(() => {
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
 
-  // 鼠標移動效果 - 跟隨粒子
+  // 鼠標移動效果
   function handleMouseMove(e) {
     for (let i = 0; i < 5; i++) {
       particles.push({
@@ -169,7 +169,7 @@ onMounted(() => {
     hue = (hue + 2) % 360;
   }
 
-  // 鼠標點擊效果 - 煙花爆炸
+  // 鼠標點擊效果
   function handleClick(e) {
     // 產生更多粒子以達到濺射效果
     const particleCount = 30 + Math.floor(Math.random() * 20);

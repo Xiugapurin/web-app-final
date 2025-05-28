@@ -62,7 +62,7 @@
         </div>
       </div>
   
-      <!-- 獨立遮罩層 (無動畫) -->
+      <!-- 獨立遮罩層 -->
       <div
         v-if="showModal"
         class="fixed inset-0 bg-gray-500/50 backdrop-blur-xs z-40"
@@ -131,40 +131,6 @@ function goToRooms() {
   router.push("/rooms");
 }
 
-// 房間相關函數
-const generateRandomId = () => {
-  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = "";
-  for (let i = 0; i < 3; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
-};
-
-const goBack = () => {
-  router.push("/rooms");
-};
-
-const createNewRoom = () => {
-  if (!roomName.value) return;
-
-  const newRoom = {
-    id: generateRandomId(),
-    name: roomName.value,
-    currentPlayers: 0,
-    maxPlayers: maxPlayers.value,
-    language: "ZH-CN",
-    timeElapsed: 0,
-    maxTime: 120,
-  };
-
-  // 把新房間資訊傳到後端
-  // Todo
-
-  // 導回房間列表頁
-  router.push("/rooms");
-};
-
 // canvas 特效
 const canvas = ref(null);
 
@@ -183,7 +149,7 @@ onMounted(() => {
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
 
-  // 鼠標移動效果 - 跟隨粒子
+  // 鼠標移動效果 
   function handleMouseMove(e) {
     for (let i = 0; i < 5; i++) {
       particles.push({
@@ -202,7 +168,7 @@ onMounted(() => {
     hue = (hue + 2) % 360;
   }
 
-  // 鼠標點擊效果 - 煙花爆炸
+  // 鼠標點擊效果 
   function handleClick(e) {
     // 產生更多粒子以達到濺射效果
     const particleCount = 30 + Math.floor(Math.random() * 20);
