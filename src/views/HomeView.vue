@@ -1,61 +1,59 @@
 <template>
-  <div class="relative z-10">
-    <!-- 只有 HomeView 有 canvas -->
-    <canvas
-      ref="canvas"
-      class="fixed top-0 left-0 w-full h-full z-0 pointer-events-none"
-    ></canvas>
-
-    <!-- 主內容 -->
-    <div
-      class="flex flex-col w-full justify-center items-center gap-8 relative z-10"
-    >
-      <div
-        class="relative mt-16 w-[40%] h-[60vh] bg-white rounded-xl overflow-hidden"
-      >
-        <h1
-          class="mt-16 text-5xl font-bold text-center text-blue-600 drop-shadow-md"
-        >
-          遊戲名稱
-        </h1>
-
+    <div class="relative z-10 flex flex-col justify-center">
+      <!-- 背景canvas -->
+      <canvas
+        ref="canvas"
+        class="fixed top-0 left-0 w-full h-full z-0 pointer-events-none"
+      ></canvas>
+  
+      <!-- 主內容 -->
+      <div class="flex-grow flex flex-col md:mt-8 xl:mt-16 justify-center items-center gap-4 md:gap-8 px-4 py-8 relative z-10">
         <div
-          class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md px-8"
+          class="relative w-full max-w-2xl bg-white rounded-xl overflow-hidden shadow-lg flex flex-col justify-between p-6 sm:p-8 min-h-[400px]"
         >
-          <div class="flex items-center gap-4">
-            <label
-              for="guest-name"
-              class="whitespace-nowrap text-gray-700 text-lg font-medium"
-            >
-              遊客名稱：
-            </label>
-            <input
-              type="text"
-              id="guest-name"
-              class="flex-1 px-4 py-2 border border-gray-500 rounded-lg focus:ring-2 focus:ring-black-500 focus:border-black-500 outline-none transition"
-              placeholder="輸入名稱"
-              maxlength="16"
-              v-model="userName"
-            />
+          <!-- 標題 -->
+          <h1
+            class="text-3xl sm:text-4xl md:text-5xl font-bold text-center text-blue-600 drop-shadow-md mb-4"
+          >
+            遊戲名稱
+          </h1>
+  
+          <!-- 輸入欄位 -->
+          <div class="w-full flex justify-center mb-4">
+            <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 w-full max-w-md px-4">
+              <label
+                for="guest-name"
+                class="whitespace-nowrap text-gray-700 text-base sm:text-lg font-medium"
+              >
+                玩家名稱：
+              </label>
+              <input
+                type="text"
+                id="guest-name"
+                class="w-full sm:flex-1 px-3 sm:px-4 py-2 border border-gray-500 rounded-lg focus:ring-2 focus:ring-black-500 focus:border-black-500 outline-none transition text-sm sm:text-base"
+                placeholder="輸入名稱"
+                maxlength="16"
+                v-model="user.name"
+              />
+            </div>
           </div>
-        </div>
-
-        <div class="absolute bottom-16 left-0 right-0 px-8">
-          <div class="flex justify-center gap-4 max-w-md mx-auto">
+  
+          <!-- 按鈕 -->
+          <div class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 w-full max-w-md mx-auto">
             <button
               @click="goToRooms"
-              class="w-[30%] bg-sky-500 hover:bg-sky-400 text-white font-medium py-3 px-4 rounded-lg transition border-2 border-gray-500"
+              class="w-full sm:w-[30%] bg-sky-500 hover:bg-sky-400 text-white font-medium py-2 sm:py-3 px-4 rounded-lg transition border-2 border-gray-500 text-sm sm:text-base"
             >
               房間
             </button>
-
+  
             <button
               @click="startGame"
-              :disabled="!userName"
+              :disabled="!user.name"
               :class="{
-                'w-[30%] text-white font-medium py-3 px-4 rounded-lg transition border-2 border-gray-500': true,
-                'bg-amber-500 hover:bg-amber-400': userName,
-                'bg-gray-400 cursor-not-allowed': !userName,
+                'w-full sm:w-[30%] text-white font-medium py-2 sm:py-3 px-4 rounded-lg transition border-2 border-gray-500 text-sm sm:text-base': true,
+                'bg-amber-500 hover:bg-amber-400': user.name,
+                'bg-gray-400 cursor-not-allowed': !user.name,
               }"
             >
               開始遊戲
@@ -63,66 +61,70 @@
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- 獨立遮罩層 (無動畫) -->
-    <div
-      v-if="showModal"
-      class="fixed inset-0 bg-gray-500/50 backdrop-blur-xs z-40"
-      @click="showModal = false"
-    ></div>
-
-    <!-- 彈窗 -->
-    <transition
-      enter-active-class="transition-all duration-300 ease-out"
-      enter-from-class="opacity-0 scale-90"
-      enter-to-class="opacity-100 scale-100"
-      leave-active-class="transition-all duration-0 ease-in"
-      leave-from-class="opacity-100 scale-100"
-      leave-to-class="opacity-0 scale-100"
-    >
+  
+      <!-- 獨立遮罩層 (無動畫) -->
       <div
         v-if="showModal"
-        class="fixed inset-0 flex items-center justify-center z-50"
+        class="fixed inset-0 bg-gray-500/50 backdrop-blur-xs z-40"
+        @click="showModal = false"
+      ></div>
+  
+      <!-- 彈窗 -->
+      <transition
+        enter-active-class="transition-all duration-300 ease-out"
+        enter-from-class="opacity-0 scale-90"
+        enter-to-class="opacity-100 scale-100"
+        leave-active-class="transition-all duration-0 ease-in"
+        leave-from-class="opacity-100 scale-100"
+        leave-to-class="opacity-0 scale-100"
       >
         <div
-          class="bg-white p-6 rounded-lg max-w-sm w-full transform transition-all duration-300"
+          v-if="showModal"
+          class="fixed inset-0 flex items-center justify-center z-50 px-4"
         >
-          <h3 class="text-lg font-medium text-gray-900 mb-4">
-            玩家暱稱不可為空
-          </h3>
-          <div class="flex justify-end">
-            <button
-              @click="showModal = false"
-              class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
+          <div
+            class="bg-white p-4 sm:p-6 rounded-lg w-full max-w-xs sm:max-w-sm transform transition-all duration-300"
+          >
+            <h3
+              class="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4"
             >
-              確定
-            </button>
+              玩家名稱不可為空
+            </h3>
+            <div class="flex justify-end">
+              <button
+                @click="showModal = false"
+                class="px-3 sm:px-4 py-1 sm:py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition text-sm sm:text-base"
+              >
+                確定
+              </button>
+            </div>
           </div>
         </div>
-      </div>
-    </transition>
-  </div>
-</template>
+      </transition>
+    </div>
+  </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
+import { useUserStore } from "../stores/User";
 
 const router = useRouter();
-const userName = ref("");
+// const userName = user.name;
 const roomName = ref("");
 const maxPlayers = ref(2); // 默認2人
 const showModal = ref(false);
 
+const user = useUserStore();
+
 // 遊戲相關函數
 function startGame() {
-  if (!userName.value) return;
-  console.log("遊戲開始，用戶名:", userName.value);
+  if (!user.name) return;
+  console.log("遊戲開始，用戶名:", user.name);
 }
 
 function goToRooms() {
-  if (!userName.value) {
+  if (!user.name) {
     showModal.value = true;
     return;
   }
