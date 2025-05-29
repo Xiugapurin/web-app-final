@@ -5,6 +5,11 @@ import CreateView from "../views/CreateView.vue";
 import { useUserStore } from "../stores/User";
 
 const routes = [
+  // {
+  //   path: "/",
+  //   name: "Home",
+  //   component: HomeView,
+  // },
   {
     path: "/",
     name: "Home",
