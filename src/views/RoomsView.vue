@@ -1,7 +1,6 @@
 <template>
   <div class="relative z-10">
     <BackgroundPainter></BackgroundPainter>
-
     <!-- main area -->
     <div
       class="w-full max-w-5xl mx-auto md:mt-8 xl:mt-24 px-4 flex flex-col relative z-10"
