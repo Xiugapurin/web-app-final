@@ -41,19 +41,19 @@
         <div class="mt-4 pt-4">
           <div class="flex flex-col sm:flex-row justify-center gap-4">
             <button
-              class="px-6 py-3 bg-lime-500 text-white font-medium rounded-lg transition-colors hover:bg-lime-400 focus:outline-none border-2 border-gray-500 w-full sm:w-auto"
+              class="px-6 py-3 bg-lime-500 text-white font-medium rounded-lg transition-colors hover:bg-lime-400 focus:outline-none border-2 border-gray-500 w-[9vw]"
               @click="goBack"
             >
               返回上一頁
             </button>
             <button
-              class="px-6 py-3 bg-sky-500 text-white font-medium rounded-lg transition-colors hover:bg-sky-400 focus:outline-none border-2 border-gray-500 w-full sm:w-auto"
+              class="px-6 py-3 bg-sky-500 text-white font-medium rounded-lg transition-colors hover:bg-sky-400 focus:outline-none border-2 border-gray-500 w-[9vw]"
               @click="createRoom"
             >
               創建新房間
             </button>
             <button
-              class="px-6 py-3 bg-amber-500 text-white font-medium rounded-lg transition-colors hover:bg-amber-400 focus:outline-none disabled:bg-gray-400 disabled:cursor-not-allowed border-2 border-gray-500 w-full sm:w-auto"
+              class="px-6 py-3 bg-amber-500 text-white font-medium rounded-lg transition-colors hover:bg-amber-400 focus:outline-none disabled:bg-gray-400 disabled:cursor-not-allowed border-2 border-gray-500 w-[9vw]"
               :disabled="!selectedRoomId"
               @click="joinRoom"
             >
