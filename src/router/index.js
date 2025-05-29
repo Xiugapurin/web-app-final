@@ -2,33 +2,34 @@ import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
 import RoomsView from "../views/RoomsView.vue";
 import CreateView from "../views/CreateView.vue";
+import GameRoomView from "../views/GameRoomView.vue";
 import { useUserStore } from "../stores/User";
 
 const routes = [
   // {
   //   path: "/",
-  //   name: "Home",
-  //   component: HomeView,
+  //   name: "GameRoom",
+  //   component: GameRoomView,
   // },
   {
     path: "/",
     name: "Home",
-    component: HomeView
+    component: HomeView,
   },
   {
     path: "/rooms",
     name: "Rooms",
-    component: RoomsView
+    component: RoomsView,
   },
   {
     path: "/create-room",
     name: "Create",
-    component: CreateView
+    component: CreateView,
   },
   {
     path: "/room/:roomId",
     name: "GameRoom",
-    component: () => import("../views/GameRoomView.vue"),
+    component: GameRoomView,
     props: true,
   },
 ];
@@ -39,21 +40,17 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const user = useUserStore()
-  
-  // 如果目標路由就是首頁，直接允許
-  if (to.name === 'Home') {
-    return next()
+  const user = useUserStore();
+
+  if (to.name === "Home") {
+    return next();
   }
-  
-  // 其他路由檢查用戶名
+
   if (!user.name) {
-    next('/') // 跳轉到首頁
+    next("/");
   } else {
-    next() // 允許導航
+    next();
   }
-})
+});
 
 export default router;
-
-

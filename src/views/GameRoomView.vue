@@ -93,7 +93,7 @@
               v-if="showImageOverlay && targetImageSrc"
               :src="targetImageSrc"
               alt="Overlay"
-              class="absolute top-0 left-0 w-full h-full object-contain opacity-50 pointer-events-none"
+              class="absolute top-0 left-0 w-full h-full object-contain opacity-20 pointer-events-none"
             />
           </div>
 
@@ -115,7 +115,7 @@
 
             <div class="w-full h-0.5 bg-gray-200 my-1"></div>
 
-            <div class="flex-grow overflow-y-auto gap-3 pt-2 w-[50px] sm:w-[60px] flex flex-col items-center">
+            <div class="flex-grow overflow-y-auto gap-3 py-2 w-[50px] sm:w-[60px] flex flex-col items-center">
               <button
                 v-for="color in basicColors"
                 :key="color.name"
@@ -139,10 +139,10 @@
         </div>
       </section>
 
-      <aside class="lg:w-1/3 bg-gray-700 p-6 rounded-lg shadow-xl space-y-8">
+      <aside class="lg:w-1/3 bg-white p-6 rounded-lg shadow-xl space-y-8">
         <div>
-          <h2 class="text-2xl font-semibold mb-4 text-center text-white">Target Image</h2>
-          <div class="w-full aspect-square bg-gray-600 border-2 border-black rounded-md flex items-center justify-center overflow-hidden">
+          <h2 class="text-2xl font-semibold mb-4 text-center text-black">Target Image</h2>
+          <div class="w-full aspect-square border-2 border-black rounded-md flex items-center justify-center overflow-hidden">
             <img
               v-if="targetImageSrc"
               :src="targetImageSrc"
@@ -170,11 +170,14 @@
     </main>
 
     <PaletteComponent
+      :timeLeft="timeLeft"
       :show="showColorMixerModal"
       :basic-colors="basicColors"
       :current-mixed-colors="mixedColors"
+      :target-image-src="targetImageSrc"
       @close="showColorMixerModal = false"
-      @new-color-mixed="handleNewMixedColor"
+      @add-custom-color="handleAddNewColorFromPalette"
+      @remove-custom-color="handleRemoveCustomColorFromPalette"
     />
   </div>
 </template>
@@ -271,12 +274,23 @@ const selectColor = (colorHex) => {
   }
 };
 
-const handleNewMixedColor = (newColor) => {
-  if (newColor && !mixedColors.includes(newColor)) {
-    mixedColors.push(newColor);
-    selectColor(newColor);
+const handleAddNewColorFromPalette = (newColorHex) => {
+  if (newColorHex && !mixedColors.includes(newColorHex)) {
+    mixedColors.push(newColorHex);
+    // Optionally select this new color in the main game
+    // selectColor(newColorHex); 
   }
-  showColorMixerModal.value = false;
+  // Do not close the palette modal here, let user decide or add a specific "Add & Close"
+};
+
+const handleRemoveCustomColorFromPalette = (colorHexToRemove) => {
+  const index = mixedColors.findIndex(hex => hex === colorHexToRemove);
+  if (index !== -1) {
+    mixedColors.splice(index, 1);
+    if (selectedColor.value === colorHexToRemove) {
+      selectedColor.value = basicColors.length > 0 ? basicColors[0].hex : '#000000'; // Fallback
+    }
+  }
 };
 
 const startTimer = () => {
