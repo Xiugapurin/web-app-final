@@ -93,6 +93,7 @@
           </h3>
           <div class="flex justify-end gap-4">
             <button
+              v-if="clickToCreateRoom"
               @click="
                 showHint = false;
                 clickToCreateRoom = false;
