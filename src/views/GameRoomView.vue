@@ -1,13 +1,13 @@
 <template>
-  <div class="min-h-screen text-white flex flex-col items-center bg-gray-100">
+  <div class="min-h-screen text-black flex flex-col items-center bg-gray-100">
     <header class="w-full max-w-7xl mb-6 flex justify-between items-center pt-4 px-4 lg:px-0">
       <div class="text-2xl font-bold text-black">
-        Room <span class="text-pink-500"># {{ roomId }}</span>
+        房間 <span class="text-pink-500"># {{ gameStore.roomId ? gameStore.roomId.substring(0, 4) : 'N/A' }}</span>
       </div>
       <div class="flex items-center gap-4">
         <Icon class="text-2xl sm:text-4xl text-black" icon="material-symbols:timer-rounded" />
         <div class="text-2xl font-semibold bg-pink-500 text-white px-4 py-2 rounded-lg shadow-md">
-          {{ timeLeft }} 
+          {{ formattedTimeLeft }}
         </div>
       </div>
     </header>
@@ -16,29 +16,29 @@
       <section class="flex-grow lg:w-2/3 bg-white p-6 rounded-lg shadow-xl flex flex-col gap-4">
         <div class="relative flex justify-center items-center mb-6">
           <div class="absolute top-0 left-0 flex flex-col items-center p-1 sm:p-4 gap-3 sm:gap-6 h-full bg-gray-50 rounded-l-lg shadow-md">
-            <button
-              class="cursor-pointer hover:scale-105 transform transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-              @click="handleUndo"
-              :disabled="!undoRedoState.canUndo"
-              title="Undo (Ctrl+Z)"
+            <!-- <button 
+              @click="handleUndo" 
+              :disabled="!undoRedoUiState.canUndo" 
+              title="Undo (Ctrl+Z)" 
+              class="p-1 cursor-pointer transform transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Icon class="text-2xl sm:text-3xl text-gray-700 hover:text-blue-500" icon="icon-park-solid:back" />
             </button>
-            <button
-              class="cursor-pointer hover:scale-105 transform transition-transform disabled:opacity-50 disabled:cursor-not-allowed"
-              @click="handleRedo"
-              :disabled="!undoRedoState.canRedo"
-              title="Redo (Ctrl+Shift+Z)"
+            <button 
+              @click="handleRedo" 
+              :disabled="!undoRedoUiState.canRedo" 
+              title="Redo (Ctrl+Shift+Z)" 
+              class="p-1 cursor-pointer transform transition-transform hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Icon class="text-2xl sm:text-3xl text-gray-700 hover:text-blue-500" icon="icon-park-solid:next" />
-            </button>
-            <button
-              class="cursor-pointer hover:scale-105 transform transition-transform"
-              @click="toggleEraser"
-              :title="isEraserActive ? 'Switch to Pen' : 'Switch to Eraser'"
+            </button> -->
+            <button 
+              @click="toggleEraser" 
+              :title="isEraserActive ? 'Switch to Pen' : 'Switch to Eraser'" 
+              class="p-1 cursor-pointer transform transition-transform hover:scale-105"
             >
-              <Icon v-if="isEraserActive" class="text-2xl sm:text-3xl text-gray-600 hover:text-blue-500" icon="streamline:pen-draw-solid" />
-              <Icon v-else class="text-2xl sm:text-3xl text-gray-600 hover:text-pink-500" icon="bi:eraser-fill" />
+              <Icon v-if="isEraserActive" class="text-2xl sm:text-3xl text-gray-700 hover:text-blue-500" icon="streamline:pen-draw-solid" />
+              <Icon v-else class="text-2xl sm:text-3xl text-gray-700 hover:text-pink-500" icon="bi:eraser-fill" />
             </button>
             <div class="flex flex-col items-center gap-2 mt-2">
               <div class="flex flex-col items-center">
@@ -60,23 +60,23 @@
                     'ring-pink-500': currentBrushSize === size.value && isEraserActive,
                     'ring-blue-500': currentBrushSize === size.value && !isEraserActive,
                   }"
-                  class="rounded-full transition-all flex items-center justify-center hover:opacity-80 cursor-pointer border border-gray-400"
+                  class="flex h-auto w-auto cursor-pointer items-center justify-center rounded-full border border-gray-400 transition-all hover:opacity-80"
                   :title="`Brush size: ${size.label}`"
                   >
                 </button>
               </div>
             </div>
-            <button
-              class="cursor-pointer hover:scale-105 transform transition-transform mt-auto"
-              @click="clearUserCanvas"
-              title="Clear Canvas"
+            <button 
+              @click="clearUserCanvas" 
+              title="Clear Canvas" 
+              class="p-1 cursor-pointer transform transition-transform hover:scale-105 mt-auto"
             >
               <Icon class="text-2xl sm:text-3xl text-gray-700 hover:text-pink-500" icon="ic:baseline-delete" />
             </button>
           </div>
 
           <div class="relative">
-            <CanvasComponent
+            <UserCanvas
               ref="drawingCanvasRef"
               :canvas-width="512"
               :canvas-height="512"
@@ -86,128 +86,119 @@
               :brush-size="currentBrushSize"
               :is-eraser="isEraserActive"
               background-color="#FFFFFF"
-              @drawing-end="updateUndoRedoState"
+              @drawing-end="updateUndoRedoUiStateFromEvent"
+              @stroke-emitted="handleMyStrokeEmitted"
             />
-            
-            <img
-              v-if="showImageOverlay && targetImageSrc"
-              :src="targetImageSrc"
-              alt="Overlay"
+            <img 
+              v-if="showImageOverlay && gameStore.targetImageSrc" 
+              :src="gameStore.targetImageSrc" 
+              alt="Overlay" 
               class="absolute top-0 left-0 w-full h-full object-contain opacity-20 pointer-events-none"
             />
           </div>
 
           <div class="absolute top-0 right-0 flex flex-col items-center p-1 sm:p-4 gap-3 h-full bg-gray-50 rounded-r-lg shadow-md overflow-hidden">
-            <button
-              class="cursor-pointer hover:scale-105 transform transition-transform"
-              @click="toggleImageOverlay"
-              title="Toggle Target Image Overlay"
+            <button 
+              @click="toggleImageOverlay" 
+              title="Toggle Target Image Overlay" 
+              class="p-1 cursor-pointer transform transition-transform hover:scale-105"
             >
               <Icon class="text-2xl sm:text-3xl" :class="showImageOverlay ? 'text-blue-500' : 'text-gray-700 hover:text-blue-500'" icon="mdi:image" />
             </button>
-            <button
-              class="cursor-pointer hover:scale-105 transform transition-transform"
-              @click="showColorMixerModal = true"
-              title="Palette"
+            <button 
+              @click="showColorMixerModal = true" 
+              title="Palette" 
+              class="p-1 cursor-pointer transform transition-transform hover:scale-105"
             >
               <Icon class="text-2xl sm:text-3xl text-gray-700 hover:text-pink-500" icon="mdi:palette" />
             </button>
-
             <div class="w-full h-0.5 bg-gray-200 my-1"></div>
-
-            <div class="flex-grow overflow-y-auto gap-3 py-2 w-[50px] sm:w-[60px] flex flex-col items-center">
+            <div class="flex-grow overflow-y-auto gap-3 py-2 w-[50px] sm:w-[60px] flex flex-col items-center custom-scrollbar">
               <button
-                v-for="color in basicColors"
-                :key="color.name"
-                class="w-8 h-8 sm:w-9 sm:h-9 rounded-md border border-gray-300 cursor-pointer focus:outline-none focus:ring-offset-1 focus:ring-offset-gray-50 shrink-0"
-                :style="{ backgroundColor: color.hex }"
-                :class="selectedColor === color.hex && !isEraserActive ? 'ring-2 ring-blue-500' : 'hover:opacity-70'"
-                :title="color.name"
-                @click="selectColor(color.hex)"
+                v-for="colorObj in gameStore.fullColorPalette"
+                :key="`palette-${colorObj.hex}`"
+                :style="{ backgroundColor: colorObj.hex }"
+                :class="selectedColor === colorObj.hex && !isEraserActive ? 'ring-2 ring-blue-500' : 'hover:opacity-70'"
+                :title="colorObj.name || colorObj.hex"
+                @click="selectColor(colorObj.hex)"
+                class="h-8 w-8 shrink-0 cursor-pointer rounded-md border border-gray-300 focus:outline-none focus:ring-offset-1 focus:ring-offset-gray-50 sm:h-9 sm:w-9"
               ></button>
               <button
-                v-for="(color, index) in mixedColors"
-                :key="`mixed-${index}-${color}`"
-                class="w-8 h-8 sm:w-9 sm:h-9 rounded-md border border-gray-300 cursor-pointer focus:outline-none focus:ring-offset-1 focus:ring-offset-gray-50 shrink-0"
-                :style="{ backgroundColor: color }"
-                :class="selectedColor === color && !isEraserActive ? 'ring-2 ring-blue-500' : 'hover:opacity-70'"
-                title="Mixed Color"
-                @click="selectColor(color)"
+                v-for="(colorHex, index) in sessionMixedColors"
+                :key="`mixed-session-${index}-${colorHex}`"
+                :style="{ backgroundColor: colorHex }"
+                :class="selectedColor === colorHex && !isEraserActive ? 'ring-2 ring-blue-500' : 'hover:opacity-70'"
+                title="Mixed Color (Session)"
+                @click="selectColor(colorHex)"
+                class="h-8 w-8 shrink-0 cursor-pointer rounded-md border border-gray-300 focus:outline-none focus:ring-offset-1 focus:ring-offset-gray-50 sm:h-9 sm:w-9"
               ></button>
             </div>
           </div>
         </div>
       </section>
 
-      <aside class="lg:w-1/3 bg-white p-6 rounded-lg shadow-xl space-y-8">
-        <div>
-          <h2 class="text-2xl font-semibold mb-4 text-center text-black">Target Image</h2>
+      <aside class="flex flex-row lg:flex-col lg:w-1/3 bg-white p-6 gap-6 rounded-lg shadow-xl">
+        <div class="flex flex-col w-full">
+          <h2 class="text-2xl font-semibold mb-4 text-center text-black">目標圖片</h2>
           <div class="w-full aspect-square border-2 border-black rounded-md flex items-center justify-center overflow-hidden">
             <img
-              v-if="targetImageSrc"
-              :src="targetImageSrc"
+              v-if="gameStore.targetImageSrc"
+              :src="gameStore.targetImageSrc"
               alt="Target Image"
-              class="w-full h-full object-cover" >
-            <span v-else class="text-gray-400 text-sm">Loading target image...</span>
+              class="w-full h-full object-contain" >
+            <span v-else class="text-gray-400 text-sm">圖片載入中...</span>
           </div>
         </div>
-
-        <div>
-          <h2 class="text-2xl font-semibold mb-6 text-center text-green-300">Other Players</h2>
-          <div class="space-y-6">
-            <div v-for="player in otherPlayers" :key="player.id" class="bg-gray-600 p-4 rounded-lg shadow-md">
-              <h3 class="text-lg font-medium mb-2 text-green-400">{{ player.name }}</h3>
-              <div class="w-full aspect-square bg-gray-200 border-2 border-green-500 rounded-md flex items-center justify-center text-gray-500 text-sm">
-                (Player {{ player.name }}'s canvas)
+        <div class="flex flex-col w-full flex-grow min-h-0">
+          <h2 class="text-xl font-semibold mb-4 text-center text-blue-500">
+            其他玩家 ({{ opponents.length }})
+          </h2>
+          <div class="flex-grow space-y-4 overflow-y-auto custom-scrollbar pr-2">
+            <div v-if="opponents.length === 0" class="text-center text-gray-400 pt-10">等待其他玩家...</div>
+            <div v-for="player in opponents" :key="player.id" class="p-1 rounded-lg">
+              <h3 class="text-lg mb-1 text-black truncate"><span class="font-bold text-pink-500">{{ player.name }}</span> 的畫布</h3>
+              <div class="w-full aspect-square bg-gray-300 border-gray-400 rounded-md">
+                <OpponentCanvas
+                  :key="`opponent-canvas-${player.id}-${(opponentStrokes[player.id] || []).length}`"
+                  :grid-resolution-x="64"
+                  :grid-resolution-y="64"
+                  :strokes-to-process="opponentStrokes[player.id] || []"
+                  :background-color="'#FFFFFF'"
+                />
               </div>
-            </div>
-            <div v-if="otherPlayers.length === 0" class="text-center text-gray-400">
-              Waiting for other players...
             </div>
           </div>
         </div>
       </aside>
     </main>
-
-    <PaletteComponent
-      :timeLeft="timeLeft"
-      :show="showColorMixerModal"
-      :basic-colors="basicColors"
-      :current-mixed-colors="mixedColors"
-      :target-image-src="targetImageSrc"
-      @close="showColorMixerModal = false"
-      @add-custom-color="handleAddNewColorFromPalette"
-      @remove-custom-color="handleRemoveCustomColorFromPalette"
+    <PaletteComponent :timeLeft="localTimeLeft" :show="showColorMixerModal" :basic-colors="gameStore.fullColorPalette" :current-mixed-colors="sessionMixedColors" :target-image-src="gameStore.targetImageSrc" @close="showColorMixerModal = false" @add-custom-color="handleAddNewColorFromPalette" @remove-custom-color="handleRemoveCustomColorFromPalette"/>
+    <OpponentDisconnectedModal
+        :show="gameStore.showOpponentDisconnectedModal"
+        :message="gameStore.opponentDisconnectedInfo.message"
     />
   </div>
 </template>
 
 <script setup>
 import { Icon } from "@iconify/vue";
-import { ref, reactive, onMounted, onUnmounted, computed, nextTick } from 'vue';
-import CanvasComponent from '../components/Canvas.vue';
+import { ref, reactive, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
+import { useGameStore } from '../stores/gameStore';
+import UserCanvas from '../components/UserCanvas.vue'; // Renamed from CanvasComponent
+import OpponentCanvas from '../components/OpponentCanvas.vue';
 import PaletteComponent from '../components/Palette.vue';
+import OpponentDisconnectedModal from '../components/OpponentDisconnectedModal.vue';
 
-const roomId = ref('RD13');
-const timeLeft = ref(180);
+const props = defineProps({ roomId: String });
+const route = useRoute();
+const router = useRouter();
+const gameStore = useGameStore();
+
+const localTimeLeft = ref(gameStore.gameDuration || 180);
 const timerInterval = ref(null);
-const drawingCanvasRef = ref(null);
-
-const basicColors = reactive([
-  { name: 'Black', hex: '#000000' },
-  { name: 'White', hex: '#FFFFFF' },
-  { name: 'Red', hex: '#FF0000' },
-  { name: 'Green', hex: '#00FF00' },
-  { name: 'Blue', hex: '#0000FF' }
-]);
-const mixedColors = reactive([]);
-const selectedColor = ref(basicColors[0].hex);
-
-const otherPlayers = reactive([
-  // { id: 'player2', name: 'Van Gogh', canvasData: null },
-  // { id: 'player3', name: 'Picasso', canvasData: null },
-]);
-
+const drawingCanvasRef = ref(null); // Ref for UserCanvas
+const sessionMixedColors = reactive([]); 
+const selectedColor = ref('#000000');
 const currentBrushSize = ref(1);
 const brushDisplaySizes = [
   { value: 1, label: 'Small', displayPx: 16 },
@@ -215,102 +206,96 @@ const brushDisplaySizes = [
   { value: 4, label: 'Large', displayPx: 30 }
 ];
 const isEraserActive = ref(false);
-const targetImageSrc = ref(`https://picsum.photos/seed/${roomId.value || 'defaultTarget'}/512/512`);
-
 const showImageOverlay = ref(false);
+const showColorMixerModal = ref(false);
+const undoRedoUiState = reactive({ canUndo: false, canRedo: false });
 
-const undoRedoState = reactive({
-    canUndo: false,
-    canRedo: false
+const opponents = computed(() => 
+  gameStore.playerList.filter(player => player.id !== gameStore.userId)
+);
+
+const formattedTimeLeft = computed(() => {
+  const minutes = Math.floor(localTimeLeft.value / 60);
+  const seconds = localTimeLeft.value % 60;
+  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 });
 
-const updateUndoRedoState = async (state) => {
-    await nextTick();
-    if (drawingCanvasRef.value) {
-        undoRedoState.canUndo = drawingCanvasRef.value.canUndo;
-        undoRedoState.canRedo = drawingCanvasRef.value.canRedo;
-    } else if (state) {
-        undoRedoState.canUndo = state.canUndo;
-        undoRedoState.canRedo = state.canRedo;
-    }
+const updateUndoRedoUiStateFromEvent = (canvasHistoryState) => {
+    // canvasHistoryState: { canUndo: boolean, canRedo: boolean }
+    undoRedoUiState.canUndo = canvasHistoryState.canUndo;
+    undoRedoUiState.canRedo = canvasHistoryState.canRedo;
 };
 
-const handleUndo = () => {
-  if (drawingCanvasRef.value && undoRedoState.canUndo) {
-    drawingCanvasRef.value.undo();
-  }
-};
-
-const handleRedo = () => {
-  if (drawingCanvasRef.value && undoRedoState.canRedo) {
-    drawingCanvasRef.value.redo();
-  }
-};
-
-const clearUserCanvas = () => {
-  if (drawingCanvasRef.value) {
-    drawingCanvasRef.value.clearCanvas();
-  }
-};
-
-const setBrushSize = (sizeValue) => {
-  currentBrushSize.value = sizeValue;
-};
-
-const toggleEraser = () => {
-  isEraserActive.value = !isEraserActive.value;
-};
-
-const toggleImageOverlay = () => {
-  showImageOverlay.value = !showImageOverlay.value;
-};
-
-const showColorMixerModal = ref(false);
+const handleUndo = () => { if (drawingCanvasRef.value) drawingCanvasRef.value.undo(); };
+const handleRedo = () => { if (drawingCanvasRef.value) drawingCanvasRef.value.redo(); };
+const clearUserCanvas = () => { if (drawingCanvasRef.value) drawingCanvasRef.value.clearCanvas(); };
+const setBrushSize = (sizeValue) => { currentBrushSize.value = sizeValue; };
+const toggleEraser = () => { isEraserActive.value = !isEraserActive.value; };
+const toggleImageOverlay = () => { showImageOverlay.value = !showImageOverlay.value; };
 
 const selectColor = (colorHex) => {
   selectedColor.value = colorHex;
-  if (isEraserActive.value) {
-      isEraserActive.value = false;
-  }
+  if (isEraserActive.value) { isEraserActive.value = false; }
 };
-
 const handleAddNewColorFromPalette = (newColorHex) => {
-  if (newColorHex && !mixedColors.includes(newColorHex)) {
-    mixedColors.push(newColorHex);
-    // Optionally select this new color in the main game
-    // selectColor(newColorHex); 
+  if (newColorHex && !sessionMixedColors.includes(newColorHex)) {
+    sessionMixedColors.push(newColorHex); selectColor(newColorHex);
   }
-  // Do not close the palette modal here, let user decide or add a specific "Add & Close"
 };
-
 const handleRemoveCustomColorFromPalette = (colorHexToRemove) => {
-  const index = mixedColors.findIndex(hex => hex === colorHexToRemove);
+  const index = sessionMixedColors.findIndex(hex => hex === colorHexToRemove);
   if (index !== -1) {
-    mixedColors.splice(index, 1);
+    sessionMixedColors.splice(index, 1);
     if (selectedColor.value === colorHexToRemove) {
-      selectedColor.value = basicColors.length > 0 ? basicColors[0].hex : '#000000'; // Fallback
+      selectedColor.value = gameStore.fullColorPalette.length > 0 ? gameStore.fullColorPalette[0].hex : '#000000';
     }
   }
 };
 
 const startTimer = () => {
+  localTimeLeft.value = gameStore.gameDuration;
+  if (timerInterval.value) clearInterval(timerInterval.value);
   timerInterval.value = setInterval(() => {
-    if (timeLeft.value > 0) {
-      timeLeft.value--;
+    if (localTimeLeft.value > 0) {
+      localTimeLeft.value--;
     } else {
       clearInterval(timerInterval.value);
       console.log("Game Over!");
+      alert("時間到！遊戲結束。");
     }
   }, 1000);
 };
 
-const handleKeyDown = (event) => {
-  const isMac = navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
-  const ctrlOrCmd = isMac ? event.metaKey : event.ctrlKey;
+const handleMyStrokeEmitted = (strokeData) => {
+  console.log("GameRoomView: Stroke emitted from UserCanvas, type:", strokeData.operationType);
+  if (gameStore.socket && gameStore.socket.connected) {
+    gameStore.emitStroke(strokeData);
+  }
+};
 
-  if (showColorMixerModal.value || ['INPUT', 'SELECT', 'TEXTAREA'].includes(event.target.tagName)) {
+const opponentStrokes = computed(() => {
+  const strokesByOpponent = {};
+  gameStore.receivedStrokes.forEach(item => {
+    if (item.userId !== gameStore.userId) {
+        if (!strokesByOpponent[item.userId]) {
+          strokesByOpponent[item.userId] = [];
+        }
+        strokesByOpponent[item.userId].push(item.strokeData);
+    }
+  });
+  return strokesByOpponent;
+});
+
+const handleKeyDown = (event) => {
+  const activeElement = document.activeElement;
+  const isInputFocused = ['INPUT', 'SELECT', 'TEXTAREA'].includes(activeElement.tagName) || activeElement.isContentEditable;
+
+  if (showColorMixerModal.value || isInputFocused) {
       return;
   }
+
+  const isMac = navigator.userAgent.toUpperCase().indexOf('MAC') >= 0;
+  const ctrlOrCmd = isMac ? event.metaKey : event.ctrlKey;
 
   if (ctrlOrCmd && event.key.toLowerCase() === 'z') {
     event.preventDefault();
@@ -323,14 +308,28 @@ const handleKeyDown = (event) => {
 };
 
 onMounted(async () => {
+  const currentRoomIdFromRoute = props.roomId || route.params.roomId || gameStore.roomId;
+  if (!currentRoomIdFromRoute) { router.push('/'); return; }
+  if (gameStore.roomId !== currentRoomIdFromRoute) gameStore.roomId = currentRoomIdFromRoute;
+  if (!gameStore.hasUserData) { router.push('/'); return; }
+
+  if (!gameStore.socket || !gameStore.socket.connected) { gameStore.connectSocketIO(); }
+  else { gameStore.socket.emit('enter-room', { room_id: gameStore.roomId, user_id: gameStore.userId, user_name: gameStore.userName }); }
+  
+  if (!gameStore.targetImageSrc || gameStore.playerList.length === 0) {
+    await gameStore.fetchGameSetupInfo();
+  }
+  
+  localTimeLeft.value = gameStore.gameDuration;
   startTimer();
   window.addEventListener('keydown', handleKeyDown);
+
   await nextTick();
-  if (drawingCanvasRef.value) {
-    updateUndoRedoState({
-        canUndo: drawingCanvasRef.value.canUndo,
-        canRedo: drawingCanvasRef.value.canRedo
-    });
+  if(drawingCanvasRef.value && typeof drawingCanvasRef.value.canUndoState === 'boolean'){
+      updateUndoRedoUiStateFromEvent({
+          canUndo: drawingCanvasRef.value.canUndoState,
+          canRedo: drawingCanvasRef.value.canRedoState
+      });
   }
 });
 
@@ -342,11 +341,9 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.aspect-square {
-  aspect-ratio: 1 / 1;
-}
-
-/* .overflow-y-auto::-webkit-scrollbar { width: 6px; } */
-/* .overflow-y-auto::-webkit-scrollbar-thumb { background-color: #9ca3af; border-radius: 3px;} */
-/* .overflow-y-auto::-webkit-scrollbar-track { background-color: #e5e7eb; } */
+.aspect-square { aspect-ratio: 1 / 1; }
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 3px;}
+.custom-scrollbar::-webkit-scrollbar-track { background-color: #f1f5f9; }
+.custom-scrollbar { scrollbar-width: thin; scrollbar-color: #cbd5e1 #f1f5f9; }
 </style>

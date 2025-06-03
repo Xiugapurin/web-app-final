@@ -3,7 +3,8 @@ import HomeView from "../views/HomeView.vue";
 import RoomsView from "../views/RoomsView.vue";
 import CreateView from "../views/CreateView.vue";
 import GameRoomView from "../views/GameRoomView.vue";
-import { useUserStore } from "../stores/User";
+import PrepareView from "../views/PrepareView.vue";
+import { useGameStore } from "../stores/gameStore";
 
 const routes = [
   // {
@@ -20,6 +21,11 @@ const routes = [
     path: "/rooms",
     name: "Rooms",
     component: RoomsView,
+  },
+  {
+    path: "/prepare/:roomId",
+    name: "GamePrepare",
+    component: PrepareView,
   },
   {
     path: "/create-room",
@@ -40,14 +46,14 @@ const router = createRouter({
 });
 
 router.beforeEach((to, from, next) => {
-  const user = useUserStore();
+  const gameStore = useGameStore();
 
   if (to.name === "Home") {
     return next();
   }
 
-  if (!user.name) {
-    next("/");
+  if (!gameStore.hasUserData) {
+    next({ name: "Home" });
   } else {
     next();
   }

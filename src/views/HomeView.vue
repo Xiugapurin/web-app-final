@@ -1,170 +1,156 @@
 <template>
-  <div class="relative z-10 flex flex-col justify-center">
+  <div class="relative flex flex-col justify-center">
     <BackgroundPainter></BackgroundPainter>
 
-    <!-- main area -->
     <div
-      class="flex-grow flex flex-col mt-16 sm:mt-24 md:mt-32 justify-center items-center gap-4 md:gap-8 relative z-10"
+      class="flex-grow flex flex-col min-h-screen justify-center items-center gap-12 relative"
     >
-      <!-- white area -->
-      <div
-        class="relative w-full max-w-xl bg-white rounded-xl overflow-hidden shadow-lg flex flex-col justify-between p-6 sm:p-8 min-h-[400px]"
+      <h1
+        class="text-3xl sm:text-4xl md:text-5xl font-bold text-center text-blue-500 drop-shadow-md mt-4"
       >
-        <!-- title -->
-        <h1
-          class="text-3xl sm:text-4xl md:text-5xl font-bold text-center text-blue-600 drop-shadow-md mt-4"
+        遊戲名稱
+      </h1>
+      <div
+        v-if="!gameStore.hasUserData"
+        class="relative w-full max-w-sm bg-white rounded-xl shadow-lg flex flex-col justify-between p-6 gap-6"
+      >
+        <input
+          type="text"
+          id="guest-name-input"
+          class="w-full text-center sm:flex-1 px-3 sm:px-4 py-2 border-2 border-gray-300 rounded-lg text-md sm:text-lg focus:ring-2 focus:ring-black-500 focus:border-black-500 outline-none transition"
+          placeholder="我是..."
+          maxlength="32"
+          v-model="inputUserName"
+          @keyup.enter="handleSetUserName"
+        />
+
+        <button
+          @click="handleSetUserName"
+          :disabled="!inputUserName.trim()"
+          :class="{
+            'w-full text-white font-medium py-2 sm:py-3 px-4 rounded-lg transition text-md sm:text-lg': true,
+            'bg-pink-500 hover:bg-pink-400 cursor-pointer': inputUserName.trim(),
+            'bg-gray-400 cursor-not-allowed': !inputUserName.trim(),
+          }"
         >
-          遊戲名稱
-        </h1>
-
-        <!-- input -->
-        <div class="w-full flex justify-center mb-4 sm:mb-6">
-          <div class="flex flex-col gap-2 w-full max-w-md px-4">
-            <label
-              for="guest-name"
-              class="whitespace-nowrap text-gray-700 text-xs sm:text-base font-medium"
-            >
-              玩家名稱：
-            </label>
-            <input
-              type="text"
-              id="guest-name"
-              class="w-full sm:flex-1 px-3 sm:px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-black-500 focus:border-black-500 outline-none transition text-sm sm:text-base"
-              placeholder="輸入名稱"
-              maxlength="16"
-              v-model="user.name"
-            />
-          </div>
-        </div>
-
-        <!-- buttons -->
+          <span v-if="inputUserName">好了！</span>
+          <span v-else>輸入你的暱稱</span>
+        </button>
+      </div>
+      <div v-else class="relative w-full max-w-sm flex flex-col gap-6">
         <div
-          class="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 w-full max-w-md mx-auto"
+          class="bg-white rounded-xl shadow-lg flex flex-col justify-between p-6 gap-6"
         >
-          <button
-            @click="goToRooms"
-            class="w-[9vw] bg-sky-500 hover:bg-sky-400 text-white font-medium py-2 sm:py-3 px-4 rounded-lg transition border-2 border-gray-500 text-sm sm:text-base"
-          >
-            房間
-          </button>
+          <p class="text-center text-gray-700 text-lg">你好， <span class="font-semibold text-pink-500">{{ gameStore.userName }}</span>！</p>
+          <input
+            type="text"
+            id="room-code-input"
+            class="w-full text-center sm:flex-1 px-3 sm:px-4 py-2 border-2 border-gray-300 rounded-lg text-md sm:text-lg focus:ring-2 focus:ring-black-500 focus:border-black-500 outline-none transition"
+            placeholder="輸入房間號"
+            v-model="inputRoomPasskey"
+            @keyup.enter="handleJoinRoomByKey"
+          />
 
           <button
-            @click="startGame"
-            :disabled="!user.name"
+            @click="handleJoinRoomByKey"
+            :disabled="!inputRoomPasskey.trim()"
             :class="{
-              'w-[9vw] text-white font-medium py-2 sm:py-3 px-4 rounded-lg transition border-2 border-gray-500 text-sm sm:text-base': true,
-              'bg-amber-500 hover:bg-amber-400': user.name,
-              'bg-gray-400 cursor-not-allowed': !user.name,
+              'w-full text-white font-medium py-2 sm:py-3 px-4 rounded-lg transition text-md sm:text-lg': true,
+              'bg-blue-500 hover:bg-blue-400 cursor-pointer': inputRoomPasskey.trim(),
+              'bg-gray-400 cursor-not-allowed': !inputRoomPasskey.trim(),
             }"
           >
-            開始遊戲
+            加入房間
+          </button>
+        </div>
+
+        <div class="flex w-full gap-4 items-center">
+          <div class="h-0.5 w-full bg-gray-200"></div>
+          <h3 class="text-gray-400 whitespace-nowrap font-bold">或是</h3>
+          <div class="h-0.5 w-full bg-gray-200"></div>
+        </div>
+
+        <div
+          class="bg-white rounded-xl shadow-lg flex flex-col sm:flex-row justify-between p-6 gap-6"
+        >
+          <button
+            @click="resetUserName"
+            class="w-full sm:w-auto flex-1 text-pink-500 font-medium py-2 sm:py-3 px-4 rounded-lg transition text-md sm:text-lg border-2 border-pink-500 cursor-pointer hover:bg-pink-50"
+          >
+            重新取名
+          </button>
+          <button
+            @click="handleJoinAnonymous"
+            class="w-full sm:w-auto flex-1 text-white font-medium py-2 sm:py-3 px-4 rounded-lg transition text-md sm:text-lg bg-pink-500 hover:bg-pink-400 cursor-pointer"
+          >
+            隨機配對
           </button>
         </div>
       </div>
     </div>
 
-    <!-- hint layer -->
-    <div
-      v-if="showHint"
-      class="fixed inset-0 bg-gray-500/50 backdrop-blur-xs z-40"
-      @click="showHint = false"
-    ></div>
-
-    <!-- hint animation -->
-    <transition
-      enter-active-class="transition-all duration-300 ease-out"
-      enter-from-class="opacity-0 scale-90"
-      enter-to-class="opacity-100 scale-100"
-      leave-active-class="transition-all duration-0 ease-in"
-      leave-from-class="opacity-100 scale-100"
-      leave-to-class="opacity-0 scale-100"
-    >
-      <div
-        v-if="showHint"
-        class="fixed inset-0 flex items-center justify-center z-50 px-4"
-      >
-        <div
-          class="bg-white p-4 sm:p-6 rounded-lg w-full max-w-xs sm:max-w-sm transform transition-all duration-300"
-        >
-          <h3
-            class="text-base sm:text-lg font-medium text-gray-900 mb-3 sm:mb-4"
-          >
-            {{ hint }}
-          </h3>
-          <div class="flex justify-end gap-4">
-            <button
-              v-if="clickToCreateRoom"
-              @click="
-                showHint = false;
-                clickToCreateRoom = false;
-              "
-              class="px-3 sm:px-4 py-1 sm:py-2 bg-gray-500 text-white rounded hover:bg-gray-400 transition text-sm sm:text-base"
-            >
-              取消
-            </button>
-            <button
-              @click="
-                clickConfirm();
-                showHint = false;
-                clickToCreateRoom = false;
-              "
-              class="px-3 sm:px-4 py-1 sm:py-2 bg-blue-500 text-white rounded hover:bg-blue-400 transition text-sm sm:text-base"
-            >
-              確定
-            </button>
-          </div>
-        </div>
-      </div>
-    </transition>
+    <MatchingStatusModal
+      :show="gameStore.isMatching"
+      :status-message="gameStore.matchingStatusMessage"
+      :cancellable="true"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref } from "vue";
-import { useRouter } from "vue-router";
-import { useUserStore } from "../stores/User";
-import { useRoomsStore } from "../stores/Rooms";
+import { ref, onMounted } from "vue";
+import { useGameStore } from "../stores/gameStore";
 import BackgroundPainter from "../components/BackgroundPainter.vue";
+import MatchingStatusModal from "../components/MatchingStatusModal.vue";
 
-const router = useRouter();
-// const userName = user.name;
-const roomName = ref("");
-const maxPlayers = ref(2); // 默認2人
-const showHint = ref(false);
+const gameStore = useGameStore();
 
-const user = useUserStore();
-const rooms = useRoomsStore();
-const hint = ref("");
-const clickToCreateRoom = ref(false);
+const inputUserName = ref('');
+const inputRoomPasskey = ref('');
 
-// 遊戲相關函數
-function startGame() {
-  if (!user.name) return;
-  if (!rooms.roomList.length) {
-    showHint.value = true;
-    clickToCreateRoom.value = true;
-    hint.value = "目前房間為空，是否創建新房間";
-    return;
-  }
-  const randomRoomId = Math.floor(Math.random() * rooms.roomList.length);
-  router.push(`/room/${rooms.roomList[randomRoomId].id}`);
-
-  //   console.log("遊戲開始，用戶名:", user.name);
-}
-
-function goToRooms() {
-  if (!user.name) {
-    showHint.value = true;
-    hint.value = "玩家名稱不可為空";
-    return;
-  }
-  router.push("/rooms");
-}
-
-function clickConfirm() {
-  console.log("check");
-  if (clickToCreateRoom.value) {
-    router.push("/create-room");
+function handleSetUserName() {
+  if (inputUserName.value.trim()) {
+    gameStore.setUserName(inputUserName.value.trim());
+  } else {
+    alert("請輸入你的名字！");
   }
 }
+
+function resetUserName() {
+  gameStore.cleanupUserAndRoom();
+  inputUserName.value = '';
+  inputRoomPasskey.value = '';
+}
+
+async function handleJoinAnonymous() {
+  if (!gameStore.hasUserData) {
+      alert("請先設定你的名字！");
+      return;
+  }
+  await gameStore.joinAnonymousRoom();
+}
+
+async function handleJoinRoomByKey() {
+  if (!gameStore.hasUserData) {
+      alert("請先設定你的名字！");
+      return;
+  }
+  if (inputRoomPasskey.value.trim()) {
+    await gameStore.joinRoomByPasskey(inputRoomPasskey.value.trim());
+  } else {
+    alert("請輸入房間號碼！");
+  }
+}
+
+onMounted(() => {
+  if (gameStore.userName) {
+    inputUserName.value = gameStore.userName;
+  }
+
+  if (gameStore.isInRoom && gameStore.userId) {
+     console.log("Attempting to reconnect WebSocket on mount if in room...");
+     gameStore.connectSocketIO();
+  }
+});
+
 </script>
