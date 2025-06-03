@@ -184,7 +184,7 @@ import { Icon } from "@iconify/vue";
 import { ref, reactive, onMounted, onUnmounted, computed, nextTick, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useGameStore } from '../stores/gameStore';
-import UserCanvas from '../components/UserCanvas.vue'; // Renamed from CanvasComponent
+import UserCanvas from '../components/UserCanvas.vue';
 import OpponentCanvas from '../components/OpponentCanvas.vue';
 import PaletteComponent from '../components/Palette.vue';
 import OpponentDisconnectedModal from '../components/OpponentDisconnectedModal.vue';
@@ -221,7 +221,6 @@ const formattedTimeLeft = computed(() => {
 });
 
 const updateUndoRedoUiStateFromEvent = (canvasHistoryState) => {
-    // canvasHistoryState: { canUndo: boolean, canRedo: boolean }
     undoRedoUiState.canUndo = canvasHistoryState.canUndo;
     undoRedoUiState.canRedo = canvasHistoryState.canRedo;
 };
@@ -262,16 +261,11 @@ const startTimer = () => {
       clearInterval(timerInterval.value);
       console.log("時間到！準備提交作品...");
       
-      // 遊戲結束，自動提交作品
       if (drawingCanvasRef.value && typeof drawingCanvasRef.value.getCanvasDataURL === 'function') {
-        const base64Data = drawingCanvasRef.value.getCanvasDataURL(); // 例如 'data:image/png;base64,iVBORw0KGgo...'
+        const base64Data = drawingCanvasRef.value.getCanvasDataURL();
         if (base64Data) {
-          // 從 base64Data 中移除 "data:image/png;base64," 或類似前綴，如果後端只需要純 base64 字串
           const pureBase64 = base64Data.split(',')[1] || base64Data;
           gameStore.emitSubmitDrawing(pureBase64);
-          // 此時可以禁用畫布，或顯示 "已提交，等待結果..."
-          // drawingCanvasRef.value.disableDrawing(); // 假設 UserCanvas 有此方法
-          // isMatching 和 matchingStatusMessage 會由 emitSubmitDrawing action 更新
         } else {
           console.error("無法獲取畫布的 base64 數據！");
           alert("錯誤：無法提交您的作品。");
@@ -280,7 +274,6 @@ const startTimer = () => {
         console.error("drawingCanvasRef 或 getCanvasDataURL 方法未定義！");
         alert("錯誤：無法提交您的作品。");
       }
-      // 原來的 alert("時間到！遊戲結束。"); 現在由伺服器返回 'submit-result' 後觸發 Modal
     }
   }, 1000);
 };

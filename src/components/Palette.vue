@@ -76,7 +76,7 @@
         </main>
 
         <aside class="w-5/12 flex-shrink-0 flex flex-col items-center p-2 bg-gray-200 rounded-lg shadow-md">
-          <h4 class="text-lg font-bold text-center text-blue-500 mb-2">目標圖片</h4>
+          <h4 class="text-lg font-bold text-center text-gray-800 mb-2">目標圖片</h4>
           <div 
             class="w-full aspect-square max-w-[512px] rounded flex items-center justify-center overflow-hidden bg-gray-700"
           >

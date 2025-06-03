@@ -86,7 +86,7 @@ const processAndEnqueueStrokes = (strokes) => {
         if (operationType === 'clearCanvasUpdate') {
             newOpsToEnqueue.push({ type: 'clear', timestamp: baseTimestamp });
         } else if (operationType === 'draw' && path && path.length > 0) {
-            const strokeBaseTimestamp = path[0].timestamp; // 用於計算相對延遲
+            const strokeBaseTimestamp = path[0].timestamp;
             path.forEach((point, index) => {
                 newOpsToEnqueue.push({
                     type: 'point',

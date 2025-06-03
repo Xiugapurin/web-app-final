@@ -54,13 +54,13 @@ import logoUrl from '../assets/logo.png';
 const props = defineProps({
   show: Boolean,
   scores: { type: Array, default: () => [] },
-  message: String, // 來自 gameStore.matchingStatusMessage
-  winnerId: String, // 來自 gameStore.gameWinnerId
-  errorMessage: String, // 來自 gameStore.submissionError
+  message: String,
+  winnerId: String,
+  errorMessage: String,
 });
 
 const gameStore = useGameStore();
-const currentUserId = gameStore.userId; // 獲取當前用戶ID以高亮顯示
+const currentUserId = gameStore.userId;
 
 const handleConfirm = () => {
   gameStore.acknowledgeGameOver();
