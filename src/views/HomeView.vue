@@ -5,11 +5,11 @@
     <div
       class="flex-grow flex flex-col min-h-screen justify-center items-center gap-12 relative"
     >
-      <h1
-        class="text-3xl sm:text-4xl md:text-5xl font-bold text-center text-blue-500 drop-shadow-md mt-4"
-      >
-        遊戲名稱
-      </h1>
+      <img 
+        :src="logoUrl" 
+        alt="logo" 
+        class="mx-auto h-20 sm:h-24 md:h-28 drop-shadow-md"
+      />
       <div
         v-if="!gameStore.hasUserData"
         class="relative w-full max-w-sm bg-white rounded-xl shadow-lg flex flex-col justify-between p-6 gap-6"
@@ -102,6 +102,7 @@ import { ref, onMounted } from "vue";
 import { useGameStore } from "../stores/gameStore";
 import BackgroundPainter from "../components/BackgroundPainter.vue";
 import MatchingStatusModal from "../components/MatchingStatusModal.vue";
+import logoUrl from '../assets/logo.png';
 
 const gameStore = useGameStore();
 

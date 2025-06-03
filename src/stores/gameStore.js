@@ -34,15 +34,23 @@ export const useGameStore = defineStore("game", () => {
 
   const targetImageSrc = ref("");
   const gameColors = ref([]);
-  const gameDuration = ref(180);
+  const gameDuration = ref(10);
   const playerList = ref([]);
   const isCurrentUserReady = ref(false);
   const isMatching = ref(false);
   const matchingStatusMessage = ref("");
   const gameHasStarted = ref(false);
+  const isCountdownActive = ref(false);
+  const countdownSeconds = ref(3);
+  let countdownInterval = null;
 
   const showOpponentDisconnectedModal = ref(false);
   const opponentDisconnectedInfo = ref({ room_id: "", message: "" });
+
+  const showGameOverModal = ref(false);
+  const finalGameScores = ref([]);
+  const gameWinnerId = ref(null);
+  const submissionError = ref("");
 
   const hasUserData = computed(() => !!userName.value && !!userId.value);
   const isInRoom = computed(() => !!roomId.value && !!socket.value && socket.value.connected);
@@ -304,9 +312,27 @@ export const useGameStore = defineStore("game", () => {
 
     socket.value.on("all-prepared", (data) => {
       console.log('Socket.IO "all-prepared":', data);
-      if (data.room_id === roomId.value) {
-        gameHasStarted.value = true;
-        router.push(`/gameroom/${roomId.value}`);
+      if (data.room_id === roomId.value && !isCountdownActive.value && !gameHasStarted.value) {
+        // 避免重複啟動倒數
+        console.log("所有玩家已準備，開始倒數...");
+        isCountdownActive.value = true;
+        countdownSeconds.value = 3; // 設定倒數秒數
+
+        if (countdownInterval) clearInterval(countdownInterval); // 清除可能存在的舊倒數
+
+        countdownInterval = setInterval(() => {
+          if (countdownSeconds.value > 1) {
+            countdownSeconds.value--;
+          } else {
+            clearInterval(countdownInterval);
+            countdownInterval = null;
+            countdownSeconds.value = 0;
+            isCountdownActive.value = false;
+            gameHasStarted.value = true; // 標記遊戲已開始 (將觸發 PrepareView 中的 watch)
+            console.log(`房間 ${data.room_id} 遊戲開始！`);
+            // 導航邏輯已移至 PrepareView.vue 的 watch(gameHasStarted)
+          }
+        }, 1000);
       }
     });
 
@@ -343,9 +369,55 @@ export const useGameStore = defineStore("game", () => {
         console.warn("[STORE] Invalid or missing data in receive-stroke:", data);
       }
     });
+
+    socket.value.on("submit-result", (data) => {
+      // data: { winner: winnerUserId, scores: { [user_ids[0]]: scores[0], [user_ids[1]]: scores[1] } }
+      console.log('Socket.IO "submit-result" received:', data);
+      gameWinnerId.value = data.winner;
+      submissionError.value = ""; // 清除之前的錯誤
+
+      if (data.scores && typeof data.scores === "object") {
+        finalGameScores.value = Object.entries(data.scores).map(([usrId, score]) => {
+          const player = playerList.value.find((p) => p.id === usrId);
+          return {
+            id: usrId,
+            name: player ? player.name : `玩家 ${usrId.substring(0, 4)}`, // 使用 playerList 中的名字
+            score: score,
+          };
+        });
+        finalGameScores.value.sort((a, b) => b.score - a.score); // 高分在前
+      } else {
+        finalGameScores.value = []; // 無法處理分數格式
+        console.warn("Received submit-result with invalid scores format", data.scores);
+      }
+
+      matchingStatusMessage.value =
+        gameWinnerId.value === userId.value ? "恭喜你獲勝了！" : (playerList.value.find((p) => p.id === gameWinnerId.value)?.name || "對手") + "獲勝！";
+      gameHasStarted.value = false; // 遊戲已結束
+      isCurrentUserReady.value = false; // 重設準備狀態以防萬一
+      showGameOverModal.value = true; // 顯示遊戲結束 Modal
+    });
+
+    // --- 新增：監聽提交錯誤事件 ---
+    socket.value.on("submit-error", (data) => {
+      // data: { message: "Failed to compare submissions." }
+      console.error('Socket.IO "submit-error" received:', data);
+      submissionError.value = data.message || "提交作品時發生未知錯誤。";
+      finalGameScores.value = []; // 清空分數
+      gameWinnerId.value = null;
+      matchingStatusMessage.value = `錯誤：${submissionError.value}`; // 在 Modal 中顯示錯誤
+      gameHasStarted.value = false;
+      isCurrentUserReady.value = false;
+      showGameOverModal.value = true; // 仍然顯示 Modal，但內容是錯誤訊息
+    });
   }
 
   function toggleReadyState() {
+    if (isCurrentUserReady.value) {
+      // 1. 用戶不可取消準備
+      console.log("用戶已準備，不可取消。");
+      return;
+    }
     if (!socket.value || !socket.value.connected) {
       alert("Socket.IO 未連接，無法設定準備狀態。");
       return;
@@ -355,24 +427,21 @@ export const useGameStore = defineStore("game", () => {
       return;
     }
 
-    const newReadyState = !isCurrentUserReady.value;
-    isCurrentUserReady.value = newReadyState;
+    isCurrentUserReady.value = true; // 設定為準備好
 
     const playerInList = playerList.value.find((p) => p.id === userId.value);
     if (playerInList) {
-      playerInList.isReady = newReadyState;
+      playerInList.isReady = true;
     }
 
-    if (newReadyState) {
-      // Only send 'prepare' if becoming ready
-      socket.value.emit("prepare", {
-        room_id: roomId.value,
-        user_id: userId.value, // Server expects user_id
-      });
-      console.log(`使用者 ${userName.value} 發送準備事件。`);
-    } else {
-      console.log(`使用者 ${userName.value} 本地取消準備。伺服器無對應 'unprepare' 事件。`);
-    }
+    socket.value.emit("prepare", {
+      // 只在變為 true 時發送 prepare
+      room_id: roomId.value,
+      user_id: userId.value,
+    });
+    console.log(`使用者 ${userName.value} 發送準備事件。`);
+
+    // 準備後立即檢查是否所有人都已準備
     socket.value.emit("check-prepare", { room_id: roomId.value });
   }
 
@@ -389,7 +458,31 @@ export const useGameStore = defineStore("game", () => {
     if (socket.value) {
       socket.value.disconnect();
       socket.value = null;
+      if (countdownInterval) {
+        clearInterval(countdownInterval);
+        countdownInterval = null;
+      }
+      isCountdownActive.value = false;
+      countdownSeconds.value = 3;
       console.log("Socket.IO disconnected.");
+    }
+  }
+
+  function emitSubmitDrawing(base64String) {
+    if (socket.value && socket.value.connected && roomId.value && userId.value) {
+      const payload = {
+        room_id: roomId.value,
+        user_id: userId.value,
+        base64_str: base64String,
+      };
+      socket.value.emit("submit", payload);
+      console.log(`Socket.IO "submit" emitted for user ${userId.value}`);
+      // 可以在此處設定一個狀態，例如 isSubmittingDrawing = true，以在 UI 上顯示等待提示
+      matchingStatusMessage.value = "作品已提交，正在等待對手及伺服器計算結果...";
+      // isMatching.value = true; // 可以重用 isMatching 來顯示通用等待 Modal
+    } else {
+      console.error("Socket.IO 未連接或缺少必要資訊，無法提交繪圖。");
+      alert("連線錯誤，無法提交您的作品！");
     }
   }
 
@@ -430,7 +523,29 @@ export const useGameStore = defineStore("game", () => {
     router.push("/");
   }
 
+  function acknowledgeGameOver() {
+    showGameOverModal.value = false;
+    finalGameScores.value = [];
+    gameWinnerId.value = null;
+    submissionError.value = ""; // 清除提交錯誤
+
+    // 清理房間相關數據，但保留使用者帳號資訊
+    disconnectSocketIO();
+    roomId.value = "";
+    targetImageSrc.value = "";
+    gameColors.value = [];
+    playerList.value = [];
+    isCurrentUserReady.value = false;
+    gameHasStarted.value = false;
+    receivedStrokes.value = [];
+
+    console.log("遊戲結束 Modal 已確認，導航回主頁。");
+    router.push("/");
+    // 注意： cleanupUserAndRoom() 會清除 userName 和 userId，這裡我們希望保留它們
+  }
+
   function cleanupUserAndRoom() {
+    // 完全清理
     disconnectSocketIO();
     userName.value = "";
     userId.value = "";
@@ -442,22 +557,23 @@ export const useGameStore = defineStore("game", () => {
     isMatching.value = false;
     matchingStatusMessage.value = "";
     gameHasStarted.value = false;
-    receivedColors.value = [];
     receivedStrokes.value = [];
-    wsMessages.value = [];
     showOpponentDisconnectedModal.value = false;
     opponentDisconnectedInfo.value = { room_id: "", message: "" };
+    showGameOverModal.value = false;
+    finalGameScores.value = [];
+    gameWinnerId.value = null;
+    submissionError.value = "";
     console.log("User and room data completely cleaned up.");
   }
 
   return {
+    // State
     userName,
     userId,
     roomId,
     socket,
     receivedStrokes,
-    receivedColors,
-    wsMessages,
     targetImageSrc,
     fullColorPalette,
     gameDuration,
@@ -468,11 +584,17 @@ export const useGameStore = defineStore("game", () => {
     gameHasStarted,
     showOpponentDisconnectedModal,
     opponentDisconnectedInfo,
+    showGameOverModal,
+    finalGameScores,
+    gameWinnerId,
+    submissionError,
 
+    // Getters
     hasUserData,
     isInRoom,
     allPlayersActuallyReady,
 
+    // Actions
     setUserName,
     joinAnonymousRoom,
     joinRoomByPasskey,
@@ -483,7 +605,9 @@ export const useGameStore = defineStore("game", () => {
     toggleReadyState,
     checkAllPlayersPrepared,
     emitStroke,
+    emitSubmitDrawing,
     cleanupUserAndRoom,
     acknowledgeOpponentDisconnected,
+    acknowledgeGameOver,
   };
 });

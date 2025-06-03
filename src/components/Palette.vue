@@ -6,7 +6,7 @@
   >
     <div class="bg-white p-6 rounded-lg shadow-2xl w-full max-w-[1650px] h-[calc(100vh-80px)] flex flex-col text-black">
       <div class="flex justify-between items-center mb-4">
-        <h3 class="text-2xl font-bold text-pink-500"># My Palette</h3>
+        <h3 class="text-2xl font-bold text-pink-500"># 我的調色盤</h3>
         <div class="flex items-center gap-4">
           <div class="flex items-center gap-4"> <span class="text-green-400"> </span>
             <Icon class="text-2xl sm:text-4xl text-black" icon="material-symbols:timer-rounded" />
@@ -23,7 +23,7 @@
       <div class="flex-grow flex gap-4 overflow-hidden">
         <aside class="w-1/12 h-full flex-shrink-0 flex flex-col gap-4 px-2 py-4 bg-gray-200 rounded-lg shadow-md">
           <div class="flex flex-col gap-2 items-center flex-shrink-0">
-            <h4 class="text-md font-semibold text-center text-black">Preview</h4>
+            <h4 class="text-md font-semibold text-center text-black">預覽</h4>
             <div
               class="w-16 h-16 mx-auto rounded-md border-2 cursor-pointer"
               :style="{ backgroundColor: pickedColorForPreview || '#f0f0f0', borderColor: pickedColorForPreview ? 'black' : 'gray' }"
@@ -76,15 +76,17 @@
         </main>
 
         <aside class="w-5/12 flex-shrink-0 flex flex-col items-center p-2 bg-gray-200 rounded-lg shadow-md">
-          <h4 class="text-lg font-bold text-center text-blue-500 mb-2">Reference Image</h4>
-          <div class="w-full h-full max-w-[512px] max-h-[512px] rounded flex items-center justify-center">
+          <h4 class="text-lg font-bold text-center text-blue-500 mb-2">目標圖片</h4>
+          <div 
+            class="w-full aspect-square max-w-[512px] rounded flex items-center justify-center overflow-hidden bg-gray-700"
+          >
             <img
               v-if="targetImageSrc"
               :src="targetImageSrc"
               alt="Reference Image"
-              class="max-w-full max-h-full object-contain"
+              class="w-full h-full object-contain"
             />
-            <span v-else class="text-gray-400">No image</span>
+            <span v-else class="text-gray-400 p-4 text-center">找不到圖片或圖片載入中...</span>
           </div>
         </aside>
       </div>

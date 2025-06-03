@@ -34,7 +34,7 @@
         </div>
         <div>
           <h3 class="text-lg font-medium text-gray-700 mb-1">遊戲時長：</h3>
-          <p class="text-indigo-600 font-semibold">{{ gameStore.gameDuration }} 秒</p>
+          <p class="text-blue-500 font-semibold">{{ gameStore.gameDuration }} 秒</p>
         </div>
         <!-- <p class="text-xs text-gray-500 mt-auto">（目前設定無法由玩家更改）</p> -->
       </aside>
@@ -53,10 +53,10 @@
                 <span v-if="player.id === gameStore.userId" class="text-xs text-pink-500">(你)</span>
               </span>
               <span
-                :class="player.isReady ? 'text-green-500 bg-green-100' : 'text-yellow-600 bg-yellow-100'"
+                :class="player.isReady ? 'text-green-500 bg-green-100' : 'text-blue-500 bg-blue-100'"
                 class="px-3 py-1 text-xs font-semibold rounded-full"
               >
-                {{ player.isReady ? '已準備' : '準備中...' }}
+                {{ player.isReady ? '已準備' : '準備中' }}
               </span>
             </li>
           </ul>
@@ -69,18 +69,20 @@
             :disabled="isReadyButtonDisabled"
             :class="{
               'w-full text-white font-bold py-3 px-6 rounded-lg transition-transform duration-150 text-lg shadow-md focus:outline-none focus:ring-2 focus:ring-offset-2': true,
-              'bg-pink-500 hover:bg-pink-600 active:scale-95 focus:ring-pink-500': !gameStore.isCurrentUserReady,
-              'bg-orange-500 hover:bg-orange-600 active:scale-95 focus:ring-orange-500': gameStore.isCurrentUserReady,
-              'bg-gray-400 cursor-not-allowed': isReadyButtonDisabled
+              'bg-pink-500 hover:bg-pink-600 active:scale-95 focus:ring-pink-500': !gameStore.isCurrentUserReady && !gameStore.isCountdownActive,
+              'bg-gray-500': gameStore.isCurrentUserReady
             }"
           >
             {{ readyButtonText }}
           </button>
-           <p v-if="gameStore.isCurrentUserReady && !gameStore.allPlayersActuallyReady" class="text-sm text-center text-gray-600 mt-3">
-            等待其他玩家準備完畢
+           <p v-if="gameStore.isCurrentUserReady && !gameStore.allPlayersActuallyReady && !gameStore.isCountdownActive" class="text-sm text-center text-gray-800 mt-3">
+            已準備，等待其他玩家...
           </p>
-          <p v-if="gameStore.allPlayersActuallyReady" class="text-sm text-center text-green-600 mt-3">
-            所有玩家已準備！等待遊戲開始...
+          <p v-if="gameStore.allPlayersActuallyReady && !gameStore.isCountdownActive && !gameStore.gameHasStarted" class="text-sm text-center text-gray-800 mt-3">
+            所有玩家已準備！遊戲將在 3 秒後開始...
+          </p>
+          <p v-if="gameStore.isCountdownActive" class="text-sm text-center text-orange-600 font-semibold mt-3">
+            所有玩家已準備！遊戲將在 {{ gameStore.countdownSeconds }} 秒後開始...
           </p>
         </div>
       </section>
@@ -109,19 +111,21 @@ const router = useRouter();
 const gameStore = useGameStore();
 const isLoading = ref(true);
 
-console.log(typeof(gameStore.gameColors))
-
 const readyButtonText = computed(() => {
   if (gameStore.gameHasStarted) return "遊戲已開始";
+  if (gameStore.isCountdownActive) {
+    return `遊戲開始倒數 ${gameStore.countdownSeconds} 秒`;
+  }
   if (gameStore.isCurrentUserReady) {
-    return '取消準備';
+    return '已準備';
   }
   return '我準備好了！';
 });
 
 const isReadyButtonDisabled = computed(() => {
-    return gameStore.gameHasStarted;
+    return gameStore.isCurrentUserReady || gameStore.gameHasStarted || gameStore.isCountdownActive;
 });
+
 
 const handleReadyButtonClick = () => {
   if (gameStore.gameHasStarted) return;
@@ -137,10 +141,10 @@ watch(() => gameStore.gameHasStarted, (newVal) => {
 onMounted(async () => {
   isLoading.value = true;
   gameStore.gameHasStarted = false;
+
   const currentRoomIdFromRoute = route.params.roomId;
 
   if (!currentRoomIdFromRoute) {
-    console.error("No Room ID in route params.");
     alert("錯誤：未提供房間ID。正在導回主頁...");
     router.push('/');
     isLoading.value = false;
@@ -158,7 +162,6 @@ onMounted(async () => {
       return;
   }
 
-  // Connect Socket.IO
   gameStore.connectSocketIO();
 
   await gameStore.fetchGameSetupInfo();

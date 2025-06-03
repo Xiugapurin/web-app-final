@@ -131,6 +131,14 @@ const redo = () => {
 const canUndoState = computed(() => currentHistoryIndex.value > 0);
 const canRedoState = computed(() => currentHistoryIndex.value < historyStack.value.length - 1);
 
+const getCanvasDataURL = () => {
+  if (canvasElement.value) {
+    return canvasElement.value.toDataURL('image/png');
+  }
+  console.error("UserCanvas: Canvas element not available for getCanvasDataURL.");
+  return null;
+};
+
 const handleMouseDown = (event) => {
   if (event.button !== 0 || !ctx.value) return;
   isDrawing.value = true;
@@ -243,5 +251,5 @@ watch(() => [props.backgroundColor, props.canvasWidth, props.canvasHeight, props
   { deep: true }
 );
 
-defineExpose({ clearCanvas, undo, redo, canUndoState, canRedoState });
+defineExpose({ clearCanvas, undo, redo, canUndoState, canRedoState, getCanvasDataURL });
 </script>

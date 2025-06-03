@@ -2,12 +2,12 @@
   <div class="min-h-screen text-black flex flex-col items-center bg-gray-100">
     <header class="w-full max-w-7xl mb-6 flex justify-between items-center pt-4 px-4 lg:px-0">
       <div class="text-2xl font-bold text-black">
-        房間 <span class="text-pink-500"># {{ gameStore.roomId ? gameStore.roomId.substring(0, 4) : 'N/A' }}</span>
+        房間 <span class="text-pink-500">#{{ gameStore.roomId ? gameStore.roomId.substring(0, 4).toUpperCase() : 'N/A' }}</span>
       </div>
       <div class="flex items-center gap-4">
         <Icon class="text-2xl sm:text-4xl text-black" icon="material-symbols:timer-rounded" />
         <div class="text-2xl font-semibold bg-pink-500 text-white px-4 py-2 rounded-lg shadow-md">
-          {{ formattedTimeLeft }}
+          {{ localTimeLeft }}
         </div>
       </div>
     </header>
@@ -196,7 +196,7 @@ const gameStore = useGameStore();
 
 const localTimeLeft = ref(gameStore.gameDuration || 180);
 const timerInterval = ref(null);
-const drawingCanvasRef = ref(null); // Ref for UserCanvas
+const drawingCanvasRef = ref(null);
 const sessionMixedColors = reactive([]); 
 const selectedColor = ref('#000000');
 const currentBrushSize = ref(1);
@@ -255,13 +255,32 @@ const handleRemoveCustomColorFromPalette = (colorHexToRemove) => {
 const startTimer = () => {
   localTimeLeft.value = gameStore.gameDuration;
   if (timerInterval.value) clearInterval(timerInterval.value);
-  timerInterval.value = setInterval(() => {
+  timerInterval.value = setInterval(async () => {
     if (localTimeLeft.value > 0) {
       localTimeLeft.value--;
     } else {
       clearInterval(timerInterval.value);
-      console.log("Game Over!");
-      alert("時間到！遊戲結束。");
+      console.log("時間到！準備提交作品...");
+      
+      // 遊戲結束，自動提交作品
+      if (drawingCanvasRef.value && typeof drawingCanvasRef.value.getCanvasDataURL === 'function') {
+        const base64Data = drawingCanvasRef.value.getCanvasDataURL(); // 例如 'data:image/png;base64,iVBORw0KGgo...'
+        if (base64Data) {
+          // 從 base64Data 中移除 "data:image/png;base64," 或類似前綴，如果後端只需要純 base64 字串
+          const pureBase64 = base64Data.split(',')[1] || base64Data;
+          gameStore.emitSubmitDrawing(pureBase64);
+          // 此時可以禁用畫布，或顯示 "已提交，等待結果..."
+          // drawingCanvasRef.value.disableDrawing(); // 假設 UserCanvas 有此方法
+          // isMatching 和 matchingStatusMessage 會由 emitSubmitDrawing action 更新
+        } else {
+          console.error("無法獲取畫布的 base64 數據！");
+          alert("錯誤：無法提交您的作品。");
+        }
+      } else {
+        console.error("drawingCanvasRef 或 getCanvasDataURL 方法未定義！");
+        alert("錯誤：無法提交您的作品。");
+      }
+      // 原來的 alert("時間到！遊戲結束。"); 現在由伺服器返回 'submit-result' 後觸發 Modal
     }
   }, 1000);
 };
